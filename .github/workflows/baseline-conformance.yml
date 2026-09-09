@@ -34,7 +34,7 @@ jobs:
             cp -a . "$tmp/repo"
             cd "$tmp/repo"
             git remote remove origin 2>/dev/null || true
-            python scripts/baseline.py bootstrap --profile generic --name ci-smoke --owner ci-owner
+            python scripts/baseline.py bootstrap --profile generic --name ci-smoke --owner ci-owner --owner-name ci-owner --codeowner @ci-owner
             grep -q '@ci-owner' .github/CODEOWNERS
             ! grep -q '@OWNER' .github/CODEOWNERS
             python scripts/project_factory.py local-doctor
