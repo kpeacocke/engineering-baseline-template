@@ -34,7 +34,12 @@ jobs:
             cp -a . "$tmp/repo"
             cd "$tmp/repo"
             git remote remove origin 2>/dev/null || true
-            python scripts/baseline.py bootstrap --profile generic --name ci-smoke --owner ci-owner --owner-name ci-owner --codeowner @ci-owner
+            python scripts/baseline.py bootstrap \
+              --profile generic \
+              --name ci-smoke \
+              --owner ci-owner \
+              --owner-name ci-owner \
+              --codeowner @ci-owner
             grep -q '@ci-owner' .github/CODEOWNERS
             ! grep -q '@OWNER' .github/CODEOWNERS
             python scripts/project_factory.py local-doctor
@@ -50,7 +55,10 @@ jobs:
           cp -a . "$tmp/python"
           cd "$tmp/python"
           git remote remove origin 2>/dev/null || true
-          python scripts/baseline.py bootstrap --profile python --name integration-python --owner kpeacocke
+          python scripts/baseline.py bootstrap \
+            --profile python \
+            --name integration-python \
+            --owner kpeacocke
           python scripts/project_factory.py local-doctor
           python -m venv "$tmp/python-venv"
           "$tmp/python-venv/bin/python" -m pip install --disable-pip-version-check poetry==2.4.2
@@ -69,7 +77,12 @@ jobs:
           cp -a . "$tmp/ansible"
           cd "$tmp/ansible"
           git remote remove origin 2>/dev/null || true
-          python scripts/baseline.py bootstrap --profile ansible --name integration-ansible --owner kpeacocke --ansible-namespace kpeacocke --ansible-collection integration_collection
+          python scripts/baseline.py bootstrap \
+            --profile ansible \
+            --name integration-ansible \
+            --owner kpeacocke \
+            --ansible-namespace kpeacocke \
+            --ansible-collection integration_collection
           python scripts/project_factory.py local-doctor
           python -m venv "$tmp/ansible-venv"
           "$tmp/ansible-venv/bin/python" -m pip install --disable-pip-version-check -r requirements-dev.txt
