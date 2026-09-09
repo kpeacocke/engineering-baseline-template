@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "baseline_version": "0.1.2",
+  "baseline_version": "0.2.0",
   "ownership_model": {
     "managed": "central baseline owns the complete installed file",
     "extensible": "central baseline owns only the marked managed region; project text outside markers is preserved",
@@ -276,6 +276,51 @@
     {
       "path": "scripts/github_reconcile.py",
       "source": ".baseline/catalog/common/scripts/github_reconcile.py",
+      "ownership": "managed"
+    },
+    {
+      "path": "scripts/project_factory.py",
+      "source": ".baseline/catalog/common/scripts/project_factory.py",
+      "ownership": "managed"
+    },
+    {
+      "path": "baseline.ps1",
+      "source": ".baseline/catalog/common/baseline.ps1",
+      "ownership": "managed"
+    },
+    {
+      "path": "baseline.sh",
+      "source": ".baseline/catalog/common/baseline.sh",
+      "ownership": "managed"
+    },
+    {
+      "path": "scripts/_project_factory/__init__.py",
+      "source": ".baseline/catalog/common/scripts/_project_factory/__init__.py",
+      "ownership": "managed"
+    },
+    {
+      "path": "scripts/_project_factory/common.py",
+      "source": ".baseline/catalog/common/scripts/_project_factory/common.py",
+      "ownership": "managed"
+    },
+    {
+      "path": "scripts/_project_factory/local.py",
+      "source": ".baseline/catalog/common/scripts/_project_factory/local.py",
+      "ownership": "managed"
+    },
+    {
+      "path": "scripts/_project_factory/github_ops.py",
+      "source": ".baseline/catalog/common/scripts/_project_factory/github_ops.py",
+      "ownership": "managed"
+    },
+    {
+      "path": "scripts/_project_factory/workflows.py",
+      "source": ".baseline/catalog/common/scripts/_project_factory/workflows.py",
+      "ownership": "managed"
+    },
+    {
+      "path": "scripts/_project_factory/cli.py",
+      "source": ".baseline/catalog/common/scripts/_project_factory/cli.py",
       "ownership": "managed"
     }
   ],
