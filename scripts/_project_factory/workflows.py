@@ -10,17 +10,15 @@ from .common import (DEFAULT_BRANCH_PREFIX, FactoryError, RUNNER, Runner, Source
                      authenticated_login, clone_repo, commit_push, current_repo, default_branch,
                      repo_exists, require_tools, run_baseline, source_template_repository, split_repo,
                      stage_known, state_values, validate_repo_name)
-from .github_ops import (check_source_variable, check_vulnerability_reporting, enable_vulnerability_reporting,
-                         reconcile, set_source_variable, wait_commit, wait_pr)
+from .github_ops import (check_vulnerability_reporting, enable_vulnerability_reporting, reconcile,
+                         wait_commit, wait_pr)
 from .local import adopt, applicable_paths, local_doctor, preserve_overrides, restore_overrides, snapshot_paths
 
 
 def govern(repo: str, template_repo: str, source_root: Path, *, runner: Runner, fix: bool) -> None:
     if fix:
-        set_source_variable(repo, template_repo, runner=runner)
         enable_vulnerability_reporting(repo, runner=runner)
     reconcile(repo, source_root=source_root, runner=runner, fix=fix)
-    check_source_variable(repo, template_repo, runner=runner)
     check_vulnerability_reporting(repo, runner=runner)
 
 
@@ -86,7 +84,11 @@ def doctor(args: argparse.Namespace, *, runner: Runner = RUNNER) -> int:
     if not repo_exists(repo, runner=runner): raise FactoryError(f"repository does not exist: {repo}")
     template=args.template or source_template_repository(runner=runner)
     with SourceCheckout(template, runner=runner) as source, tempfile.TemporaryDirectory(prefix="engineering-baseline-doctor-") as td:
-        target=Path(td)/name; clone_repo(repo,target,runner=runner); local_doctor(target,runner=runner); govern(repo,template,source,runner=runner,fix=False)
+        target=Path(td)/name; clone_repo(repo,target,runner=runner); local_doctor(target,runner=runner)
+        configured = str(state_values(target).get("source_repository") or "")
+        if configured.casefold() != template.casefold():
+            raise FactoryError(f"baseline source drift for {repo}: current={configured!r} desired={template!r}")
+        govern(repo,template,source,runner=runner,fix=False)
     print(f"RESULT: HEALTHY — https://github.com/{repo}"); return 0
 
 

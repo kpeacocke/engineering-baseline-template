@@ -11,7 +11,6 @@ permissions:
 
 jobs:
   update:
-    if: ${{ vars.BASELINE_REPOSITORY != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -20,10 +19,23 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.14"
+      - name: Resolve baseline source from repository state
+        shell: bash
+        run: |
+          baseline_repository="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          state = json.loads(Path('.baseline/state.json').read_text(encoding='utf-8'))
+          value = str(state.get('source_repository') or '').strip()
+          if not value:
+              raise SystemExit('missing .baseline/state.json source_repository')
+          print(value)
+          PY
+          )"
+          echo "BASELINE_REPOSITORY=$baseline_repository" >> "$GITHUB_ENV"
       - name: Fetch baseline source
         env:
           GH_TOKEN: ${{ secrets.BASELINE_READ_TOKEN || github.token }}
-          BASELINE_REPOSITORY: ${{ vars.BASELINE_REPOSITORY }}
         run: gh repo clone "$BASELINE_REPOSITORY" "$RUNNER_TEMP/engineering-baseline" -- --depth=1
       - name: Apply baseline update safely
         run: python scripts/project_factory.py apply-update --source "$RUNNER_TEMP/engineering-baseline"

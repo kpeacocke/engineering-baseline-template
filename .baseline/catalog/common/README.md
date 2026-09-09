@@ -12,6 +12,8 @@ Verify the local baseline and GitHub settings:
 .\baseline.ps1 doctor
 ```
 
+The source repository is recorded in `.baseline/state.json`; no separate GitHub repository variable is required.
+
 Request an update from the central golden baseline:
 
 ```powershell

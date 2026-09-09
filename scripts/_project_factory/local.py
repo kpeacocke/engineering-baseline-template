@@ -96,7 +96,8 @@ def write_state(target: Path, vals: dict[str, str], version: str, profile: str, 
 def adopt(source: Path, target: Path, *, profile: str, owner: str, name: str,
           source_repository: str, description: str = "TODO: describe this project.") -> list[str]:
     existing_state = state_values(target)
-    if existing_state and not existing_state.get("template_mode", False):
+    template_seed = bool(existing_state.get("template_mode", False))
+    if existing_state and not template_seed:
         raise FactoryError("repository already has an installed baseline; use update")
     if (target / ".baseline").exists():
         shutil.rmtree(target / ".baseline")
@@ -112,13 +113,15 @@ def adopt(source: Path, target: Path, *, profile: str, owner: str, name: str,
         canonical = render(src.read_text(encoding="utf-8"), vals if ownership == "seed" else {})
         dst.parent.mkdir(parents=True, exist_ok=True)
         if ownership == "managed":
-            if not dst.exists():
-                dst.write_text(canonical, encoding="utf-8", newline="\n")
+            if template_seed or not dst.exists():
+                if not dst.exists() or dst.read_text(encoding="utf-8") != canonical:
+                    dst.write_text(canonical, encoding="utf-8", newline="\n")
             elif dst.read_text(encoding="utf-8") != canonical:
                 overrides.append(rel)
         elif ownership == "seed":
-            if not dst.exists():
-                dst.write_text(canonical, encoding="utf-8", newline="\n")
+            if template_seed or not dst.exists():
+                if not dst.exists() or dst.read_text(encoding="utf-8") != canonical:
+                    dst.write_text(canonical, encoding="utf-8", newline="\n")
         elif ownership == "extensible":
             if not dst.exists():
                 dst.write_text(canonical, encoding="utf-8", newline="\n")
