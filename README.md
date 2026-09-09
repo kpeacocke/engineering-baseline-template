@@ -28,7 +28,7 @@ Profiles: `generic`, `python`, `ansible`. Omit `--private` for a public reposito
 4. bootstraps the selected profile and renders project metadata/CODEOWNERS;
 5. runs baseline `doctor`;
 6. commits and pushes the bootstrap;
-7. configures the central baseline update source;
+7. records the central baseline update source in committed `.baseline/state.json`;
 8. applies repository, Actions, Dependabot, security and `main` ruleset policy;
 9. audits the GitHub settings again without fix flags;
 10. waits for GitHub Actions and fails if required validation is not green.
@@ -55,7 +55,7 @@ Inside a governed repository, the repository argument is optional:
 .\baseline.ps1 doctor
 ```
 
-This verifies both the checked-in baseline and the GitHub-side settings, including the configured baseline update source.
+This verifies both the checked-in baseline and the GitHub-side settings, including the committed baseline update source.
 
 ## Update a governed repository
 
