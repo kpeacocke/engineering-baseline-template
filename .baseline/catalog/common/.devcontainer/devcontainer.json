@@ -1,0 +1,21 @@
+{
+  "name": "Engineering project",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.14"
+    }
+  },
+  "postCreateCommand": "if [ -f requirements-dev.txt ]; then python -m pip install --user -r requirements-dev.txt; fi",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "github.vscode-github-actions",
+        "redhat.ansible",
+        "redhat.vscode-yaml",
+        "ms-python.python"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}
