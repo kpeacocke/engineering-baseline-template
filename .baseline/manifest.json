@@ -8,6 +8,11 @@
   },
   "common_assets": [
     {
+      "path": ".devcontainer/devcontainer.json",
+      "source": ".baseline/catalog/common/.devcontainer/devcontainer.json",
+      "ownership": "managed"
+    },
+    {
       "path": "AGENTS.md",
       "source": ".baseline/catalog/common/AGENTS.md",
       "ownership": "extensible",
