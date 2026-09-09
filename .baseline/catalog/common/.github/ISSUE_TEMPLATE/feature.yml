@@ -1,0 +1,28 @@
+name: Feature request
+description: Propose an outcome or capability.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / outcome
+      description: What outcome is currently difficult or impossible?
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: Success criteria
+      description: What observable result would make this complete?
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: Compatibility, security, operational or delivery constraints.
+  - type: textarea
+    id: notscope
+    attributes:
+      label: Explicitly out of scope

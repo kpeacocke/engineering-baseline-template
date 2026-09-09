@@ -1,0 +1,43 @@
+# baseline:managed:start
+# OS / editors
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+
+# VS Code local-only state (workspace settings are intentionally committed)
+.vscode/*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Ansible
+*.retry
+.molecule/
+
+# Secrets / local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Baseline scratch
+.baseline/tmp/
+.baseline/recovery/
+# baseline:managed:end
+
+# Project-specific ignores

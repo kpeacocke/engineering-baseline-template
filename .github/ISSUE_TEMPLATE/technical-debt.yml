@@ -1,0 +1,24 @@
+name: Technical debt
+description: Record a bounded maintainability or operability problem.
+title: "[Debt]: "
+labels: ["technical-debt"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Current cost / risk
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Incidents, repeated work, code paths, metrics or concrete complexity.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of done
+    validations:
+      required: true

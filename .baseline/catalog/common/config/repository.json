@@ -1,0 +1,77 @@
+{
+  "merge": {
+    "allow_squash_merge": true,
+    "allow_merge_commit": false,
+    "allow_rebase_merge": false,
+    "allow_auto_merge": true,
+    "delete_branch_on_merge": true,
+    "allow_update_branch": true,
+    "squash_merge_commit_title": "PR_TITLE",
+    "squash_merge_commit_message": "PR_BODY"
+  },
+  "features": {
+    "has_issues": true,
+    "has_projects": false,
+    "has_wiki": false,
+    "has_discussions": false
+  },
+  "security": {
+    "policy": "prefer-organisation-level",
+    "dependency_graph": "required",
+    "dependabot_alerts": "required",
+    "dependabot_security_updates": "required",
+    "secret_scanning": "required-when-supported",
+    "push_protection": "required-when-supported",
+    "code_scanning": "required-when-supported"
+  },
+  "actions": {
+    "default_workflow_permissions": "read",
+    "require_sha_pinning": true,
+    "can_approve_pull_request_reviews": false,
+    "enabled": true,
+    "allowed_actions": "all",
+    "sha_pinning_required": true
+  },
+  "labels": [
+    {
+      "name": "bug",
+      "color": "d73a4a",
+      "description": "Something is not working as intended"
+    },
+    {
+      "name": "enhancement",
+      "color": "a2eeef",
+      "description": "New capability or improvement"
+    },
+    {
+      "name": "technical-debt",
+      "color": "fbca04",
+      "description": "Bounded maintainability or operability debt"
+    },
+    {
+      "name": "documentation",
+      "color": "0075ca",
+      "description": "Documentation change or gap"
+    },
+    {
+      "name": "dependencies",
+      "color": "0366d6",
+      "description": "Dependency or supply-chain change"
+    },
+    {
+      "name": "security",
+      "color": "b60205",
+      "description": "Security-relevant work"
+    },
+    {
+      "name": "breaking-change",
+      "color": "e99695",
+      "description": "Backwards-incompatible change"
+    },
+    {
+      "name": "blocked",
+      "color": "000000",
+      "description": "Cannot progress until an external condition changes"
+    }
+  ]
+}

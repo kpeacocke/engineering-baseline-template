@@ -1,0 +1,10 @@
+profile: production
+strict: true
+mock_roles: []
+mock_modules: []
+exclude_paths:
+  - .baseline/
+  - .cache/
+  - .git/
+  - .venv/
+  - molecule/

@@ -1,0 +1,4 @@
+ansible-core>=2.19,<2.22
+ansible-lint>=26,<27
+molecule>=25,<27
+pytest>=9,<10

@@ -1,0 +1,14 @@
+namespace: "{{ANSIBLE_NAMESPACE}}"
+name: "{{ANSIBLE_COLLECTION}}"
+version: 0.1.0
+readme: README.md
+authors:
+  - "{{OWNER_NAME}}"
+description: "{{PROJECT_DESCRIPTION}}"
+license: []
+tags:
+  - infrastructure
+  - tools
+dependencies: {}
+repository: ""
+issues: ""
