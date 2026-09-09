@@ -8,6 +8,13 @@ from pathlib import Path
 from .common import FactoryError, Runner, RUNNER, gh_json
 
 
+def _api_unavailable(returncode: int, stdout: str, stderr: str) -> bool:
+    if returncode == 0:
+        return False
+    text = f"{stdout}\n{stderr}".casefold()
+    return any(token in text for token in ("404", "not found", "not implemented", "unsupported endpoint"))
+
+
 def reconcile(repo: str, *, source_root: Path, runner: Runner = RUNNER, fix: bool) -> None:
     args = [sys.executable, str(source_root / "scripts/github_reconcile.py"), "--repo", repo]
     if fix:
@@ -17,7 +24,13 @@ def reconcile(repo: str, *, source_root: Path, runner: Runner = RUNNER, fix: boo
 
 def enable_vulnerability_reporting(repo: str, *, runner: Runner = RUNNER) -> None:
     r = runner.run(["gh", "api", "--method", "PUT", f"repos/{repo}/private-vulnerability-reporting"], check=False)
-    print("[PASS ] private vulnerability reporting enabled" if r.returncode == 0 else "[N/A  ] private vulnerability reporting unavailable")
+    if r.returncode == 0:
+        print("[PASS ] private vulnerability reporting enabled")
+        return
+    if _api_unavailable(r.returncode, r.stdout, r.stderr):
+        print("[N/A  ] private vulnerability reporting unavailable")
+        return
+    raise FactoryError(f"could not enable private vulnerability reporting for {repo}: {r.stderr.strip() or r.stdout.strip()}")
 
 
 def check_vulnerability_reporting(repo: str, *, runner: Runner = RUNNER) -> None:
@@ -26,7 +39,10 @@ def check_vulnerability_reporting(repo: str, *, runner: Runner = RUNNER) -> None
         print("[N/A  ] private vulnerability reporting is a public-repository control"); return
     r = runner.run(["gh", "api", f"repos/{repo}/private-vulnerability-reporting"], check=False)
     if r.returncode:
-        raise FactoryError(f"cannot inspect private vulnerability reporting for {repo}: {r.stderr.strip()}")
+        if _api_unavailable(r.returncode, r.stdout, r.stderr):
+            print("[N/A  ] private vulnerability reporting unavailable")
+            return
+        raise FactoryError(f"cannot inspect private vulnerability reporting for {repo}: {r.stderr.strip() or r.stdout.strip()}")
     try:
         body = json.loads(r.stdout or "{}")
     except json.JSONDecodeError as exc:

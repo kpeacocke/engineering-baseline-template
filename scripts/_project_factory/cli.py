@@ -9,15 +9,24 @@ from .local import slug_python
 from .workflows import adopt_repo, apply_update_local, create, doctor, update
 
 
+def _require(condition: bool, message: str) -> None:
+    if not condition:
+        raise AssertionError(message)
+
+
 def self_test() -> int:
-    assert validate_repo_name("my-project") == "my-project"
-    try: validate_repo_name("bad/name")
-    except FactoryError: pass
-    else: raise AssertionError("invalid repository name accepted")
-    assert split_repo("owner/repo") == ("owner", "repo")
-    assert split_repo("repo", "owner") == ("owner", "repo")
-    assert slug_python("my-api") == "my_api"
-    print("SELF-TEST: PASS"); return 0
+    _require(validate_repo_name("my-project") == "my-project", "valid repository name changed")
+    try:
+        validate_repo_name("bad/name")
+    except FactoryError:
+        pass
+    else:
+        raise AssertionError("invalid repository name accepted")
+    _require(split_repo("owner/repo") == ("owner", "repo"), "owner/repo split changed")
+    _require(split_repo("repo", "owner") == ("owner", "repo"), "default owner split changed")
+    _require(slug_python("my-api") == "my_api", "Python slugging changed")
+    print("SELF-TEST: PASS")
+    return 0
 
 
 def parser() -> argparse.ArgumentParser:

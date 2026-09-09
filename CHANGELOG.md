@@ -2,6 +2,8 @@
 
 ## 0.2.0
 
+- Hardened the project factory with manifest path-boundary enforcement, consistent optional GitHub API handling, and optimisation-proof self-tests.
+
 - Add the project factory (`new`, `adopt`, `doctor`, `update`) so repository creation and governance are one supported workflow.
 - Add conservative existing-repository adoption with local override tracking.
 - Configure downstream baseline update source automatically.

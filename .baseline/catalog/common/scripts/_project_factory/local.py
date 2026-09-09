@@ -68,6 +68,19 @@ def rendered_path(asset: dict[str, Any], vals: dict[str, str]) -> str:
     return render(str(asset["path"]), vals)
 
 
+def safe_repo_path(root: Path, relative: str, *, purpose: str = "baseline path") -> Path:
+    rel = Path(relative)
+    if rel.is_absolute():
+        raise FactoryError(f"{purpose} must be relative: {relative!r}")
+    resolved_root = root.resolve()
+    candidate = (resolved_root / rel).resolve()
+    try:
+        candidate.relative_to(resolved_root)
+    except ValueError as exc:
+        raise FactoryError(f"{purpose} escapes repository root: {relative!r}") from exc
+    return candidate
+
+
 def write_state(target: Path, vals: dict[str, str], version: str, profile: str, overrides: list[str]) -> None:
     data = {
         "schema_version": 1, "installed_version": version, "profile": profile,
@@ -93,8 +106,8 @@ def adopt(source: Path, target: Path, *, profile: str, owner: str, name: str,
     overrides: list[str] = []
     for asset in assets(source, profile):
         rel = rendered_path(asset, vals)
-        src = source / str(asset["source"])
-        dst = target / rel
+        src = safe_repo_path(source, str(asset["source"]), purpose="baseline asset source")
+        dst = safe_repo_path(target, rel, purpose="rendered baseline asset path")
         ownership = str(asset["ownership"])
         canonical = render(src.read_text(encoding="utf-8"), vals if ownership == "seed" else {})
         dst.parent.mkdir(parents=True, exist_ok=True)
@@ -135,7 +148,13 @@ def applicable_paths(target: Path) -> list[str]:
                   codeowner=str(st.get("codeowner") or "@OWNER"),
                   ansible_namespace=str(st.get("ansible_namespace") or "owner"),
                   ansible_collection=str(st.get("ansible_collection") or "project"))
-    return sorted(set(rendered_path(a, vals) for a in assets(target, profile) if (target / rendered_path(a, vals)).exists()))
+    result: set[str] = set()
+    for asset in assets(target, profile):
+        rel = rendered_path(asset, vals)
+        path = safe_repo_path(target, rel, purpose="rendered baseline asset path")
+        if path.exists():
+            result.add(rel)
+    return sorted(result)
 
 
 def local_doctor(target: Path, *, runner: Runner = RUNNER) -> None:
@@ -152,14 +171,14 @@ def local_doctor(target: Path, *, runner: Runner = RUNNER) -> None:
                   ansible_collection=str(st.get("ansible_collection") or "project"))
     drift: list[str] = []
     for asset in assets(target, profile):
-        rel = rendered_path(asset, vals); dst = target / rel; own = str(asset["ownership"])
+        rel = rendered_path(asset, vals); dst = safe_repo_path(target, rel, purpose="rendered baseline asset path"); own = str(asset["ownership"])
         if own == "seed":
             continue
         if not dst.exists():
             drift.append(f"missing {rel}"); continue
         if rel in overrides:
             continue
-        canonical = (target / str(asset["source"])).read_text(encoding="utf-8")
+        canonical = safe_repo_path(target, str(asset["source"]), purpose="baseline asset source").read_text(encoding="utf-8")
         current = dst.read_text(encoding="utf-8")
         if own == "managed" and current != canonical:
             drift.append(f"managed drift {rel}")
@@ -175,13 +194,19 @@ def local_doctor(target: Path, *, runner: Runner = RUNNER) -> None:
 
 
 def preserve_overrides(target: Path) -> dict[str, bytes]:
-    return {rel: (target / rel).read_bytes() for rel in state_values(target).get("local_overrides", []) if (target / rel).exists()}
+    saved: dict[str, bytes] = {}
+    for rel in state_values(target).get("local_overrides", []):
+        path = safe_repo_path(target, str(rel), purpose="local override path")
+        if path.exists():
+            saved[str(rel)] = path.read_bytes()
+    return saved
 
 
 def restore_overrides(target: Path, saved: dict[str, bytes], source_repository: str) -> None:
     st = state_values(target)
     for rel, data in saved.items():
-        p = target / rel; p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(data)
+        p = safe_repo_path(target, rel, purpose="local override path")
+        p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(data)
     st["local_overrides"] = sorted(saved)
     st["source_repository"] = source_repository
     (target / ".baseline/state.json").write_text(json.dumps(st, indent=2) + "\n", encoding="utf-8")
