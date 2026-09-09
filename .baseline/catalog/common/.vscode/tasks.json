@@ -1,0 +1,77 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Baseline: doctor",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/baseline.py",
+        "doctor"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Baseline: reconcile check",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/baseline.py",
+        "reconcile"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Baseline: reconcile fix",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/baseline.py",
+        "reconcile",
+        "--fix"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "GitHub baseline: check",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/github_reconcile.py"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "GitHub baseline: fix safe settings",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/github_reconcile.py",
+        "--fix"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "GitHub baseline: fix security",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/github_reconcile.py",
+        "--fix",
+        "--fix-security"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "GitHub baseline: fix repository ruleset",
+      "type": "shell",
+      "command": "python",
+      "args": [
+        "scripts/github_reconcile.py",
+        "--fix-ruleset"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
