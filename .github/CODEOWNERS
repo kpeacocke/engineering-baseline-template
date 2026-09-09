@@ -1,6 +1,6 @@
 # Project-owned after bootstrap. Replace/add finer-grained ownership as the repository grows.
-* @OWNER
+* @kpeacocke
 
-/.github/ @OWNER
-/scripts/ @OWNER
-/.baseline/ @OWNER
+/.github/ @kpeacocke
+/scripts/ @kpeacocke
+/.baseline/ @kpeacocke
