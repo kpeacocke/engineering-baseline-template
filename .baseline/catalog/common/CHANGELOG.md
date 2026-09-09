@@ -1,3 +1,12 @@
 # Changelog
 
+## 0.2.0
+
+- Add the project factory (`new`, `adopt`, `doctor`, `update`) so repository creation and governance are one supported workflow.
+- Add conservative existing-repository adoption with local override tracking.
+- Configure downstream baseline update source automatically.
+- Audit/enable private vulnerability reporting for public repositories.
+- Add CI smoke coverage for first template bootstrap and the project factory.
+- Preserve adopted local overrides and exclude recovery/tmp data in scheduled and interactive baseline updates.
+
 Significant user-visible changes should be recorded here or generated from release notes according to the project's release process.

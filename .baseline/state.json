@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "installed_version": "0.1.2",
+  "installed_version": "0.2.0",
   "profile": "generic",
   "project_name": "PROJECT-NAME",
   "description": "TODO: describe this project.",
@@ -9,7 +9,8 @@
   "codeowner": "@kpeacocke",
   "ansible_namespace": "kpeacocke",
   "ansible_collection": "project_name",
-  "source_repository": null,
+  "source_repository": "kpeacocke/engineering-baseline-template",
   "template_mode": true,
-  "last_reconciled": "2026-09-08T08:17:51+00:00"
+  "last_reconciled": "2026-09-08T08:17:51+00:00",
+  "local_overrides": []
 }

@@ -25,14 +25,14 @@ jobs:
           GH_TOKEN: ${{ secrets.BASELINE_READ_TOKEN || github.token }}
           BASELINE_REPOSITORY: ${{ vars.BASELINE_REPOSITORY }}
         run: gh repo clone "$BASELINE_REPOSITORY" "$RUNNER_TEMP/engineering-baseline" -- --depth=1
-      - name: Apply baseline update
-        run: python scripts/baseline.py upgrade --source "$RUNNER_TEMP/engineering-baseline" --fix
+      - name: Apply baseline update safely
+        run: python scripts/project_factory.py apply-update --source "$RUNNER_TEMP/engineering-baseline"
       - name: Open update pull request when required
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          if git diff --quiet; then
+          if git diff --cached --quiet; then
             echo "Baseline is current."
             exit 0
           fi
@@ -45,8 +45,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add -A
           git commit -m "chore: update engineering baseline to $version"
           git push origin HEAD
           gh pr create --title "chore: update engineering baseline to $version" \
-            --body "Automated engineering-baseline update. Review managed-file changes and run normal CI before merging."
+            --body "Automated engineering-baseline update. Project overrides are preserved. Review managed-file changes and normal CI before merging."
