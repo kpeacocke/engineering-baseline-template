@@ -4,6 +4,21 @@
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.14"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {},
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "installMaven": true,
+      "installGradle": true
+    },
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "8.0"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.24"
     }
   },
   "postCreateCommand": "if [ -f requirements-dev.txt ]; then python -m pip install --user -r requirements-dev.txt; fi",
@@ -13,7 +28,11 @@
         "github.vscode-github-actions",
         "redhat.ansible",
         "redhat.vscode-yaml",
-        "ms-python.python"
+        "ms-python.python",
+        "rust-lang.rust-analyzer",
+        "vscjava.vscode-java-pack",
+        "ms-dotnettools.csdevkit",
+        "golang.go"
       ]
     }
   },

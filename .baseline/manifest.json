@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "baseline_version": "0.2.0",
+  "baseline_version": "0.3.0",
   "ownership_model": {
     "managed": "central baseline owns the complete installed file",
     "extensible": "central baseline owns only the marked managed region; project text outside markers is preserved",

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+
+- Expand the common Dev Container with Python, Rust, Java, .NET, Node.js, Go, Maven, and Gradle development tooling.
+
 ## 0.2.0
 
 - Hardened the project factory with manifest path-boundary enforcement, consistent optional GitHub API handling, and optimisation-proof self-tests.
