@@ -9,7 +9,7 @@ from pathlib import Path
 from .common import (DEFAULT_BRANCH_PREFIX, FactoryError, RUNNER, Runner, SourceCheckout,
                      authenticated_login, clone_repo, commit_push, current_repo, default_branch,
                      repo_exists, require_tools, run_baseline, source_template_repository, split_repo,
-                     stage_known, state_values, validate_repo_name)
+                     seed_from_source, stage_known, state_values, validate_repo_name)
 from .github_ops import (check_vulnerability_reporting, enable_vulnerability_reporting, reconcile,
                          wait_commit, wait_pr)
 from .local import adopt, applicable_paths, local_doctor, preserve_overrides, restore_overrides, snapshot_paths
@@ -34,16 +34,17 @@ def create(args: argparse.Namespace, *, runner: Runner = RUNNER) -> int:
     runner.run(["gh", "repo", "create", repo, "--template", template, visibility, "--description", args.description or f"{name} — engineering baseline project"])
     try:
         clone_repo(repo, target, runner=runner)
-        b = ["bootstrap", "--profile", args.profile, "--name", name, "--owner", owner, "--owner-name", owner,
-             "--codeowner", f"@{owner}", "--source-repository", template]
-        if args.description: b += ["--description", args.description]
-        if args.profile == "ansible":
-            b += ["--ansible-namespace", args.ansible_namespace or re.sub(r"[^a-z0-9_]", "_", owner.lower()),
-                  "--ansible-collection", args.ansible_collection or re.sub(r"[^a-z0-9_]+", "_", name.lower().replace("-", "_"))]
-        run_baseline(target, b, runner=runner); local_doctor(target, runner=runner)
-        stage_known(target, applicable_paths(target) + snapshot_paths(target), runner=runner)
-        commit = commit_push(target, f"chore: bootstrap engineering baseline {args.profile}", runner=runner)
         with SourceCheckout(template, runner=runner) as source:
+            seed_from_source(source, target)
+            b = ["bootstrap", "--profile", args.profile, "--name", name, "--owner", owner, "--owner-name", owner,
+                 "--codeowner", f"@{owner}", "--source-repository", template]
+            if args.description: b += ["--description", args.description]
+            if args.profile == "ansible":
+                b += ["--ansible-namespace", args.ansible_namespace or re.sub(r"[^a-z0-9_]", "_", owner.lower()),
+                      "--ansible-collection", args.ansible_collection or re.sub(r"[^a-z0-9_]+", "_", name.lower().replace("-", "_"))]
+            run_baseline(target, b, runner=runner); local_doctor(target, runner=runner)
+            stage_known(target, applicable_paths(target) + snapshot_paths(target), runner=runner)
+            commit = commit_push(target, f"chore: bootstrap engineering baseline {args.profile}", runner=runner)
             govern(repo, template, source, runner=runner, fix=True)
         if not args.no_wait: wait_commit(repo, commit, runner=runner, timeout=args.timeout)
         print(f"RESULT: PROJECT READY — https://github.com/{repo}\nWORKTREE: {target}"); return 0
