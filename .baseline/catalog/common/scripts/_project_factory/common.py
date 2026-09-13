@@ -114,6 +114,20 @@ def clone_repo(repo: str, target: Path, *, runner: Runner = RUNNER) -> None:
     runner.run(["gh", "repo", "clone", repo, str(target)])
 
 
+def seed_from_source(source: Path, target: Path) -> None:
+    """Copy template files into a newly-created repository without replacing .git."""
+    source = source.resolve()
+    target = target.resolve()
+
+    def ignored(directory: str, names: list[str]) -> set[str]:
+        ignored_names = {".git"}
+        if Path(directory).resolve() == source and target.parent == source:
+            ignored_names.add(target.name)
+        return ignored_names.intersection(names)
+
+    shutil.copytree(source, target, dirs_exist_ok=True, ignore=ignored)
+
+
 def git_identity(owner: str, *, runner: Runner = RUNNER, cwd: Path) -> None:
     runner.run(["git", "config", "user.name", owner], cwd=cwd)
     runner.run(["git", "config", "user.email", f"{owner}@users.noreply.github.com"], cwd=cwd)
