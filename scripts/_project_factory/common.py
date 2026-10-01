@@ -20,18 +20,39 @@ class FactoryError(RuntimeError):
 
 
 class Result:
-    def __init__(self, returncode: int, stdout: str = "", stderr: str = "") -> None:
+    def __init__(
+        self, returncode: int, stdout: str = "", stderr: str = ""
+    ) -> None:
         self.returncode, self.stdout, self.stderr = returncode, stdout, stderr
 
 
 class Runner:
-    def run(self, args: list[str], *, cwd: Path | None = None, env: dict[str, str] | None = None,
-            stdin: str | None = None, check: bool = True, timeout: int | None = None) -> Result:
-        p = subprocess.run(args, cwd=cwd, env=env, text=True, input=stdin, capture_output=True,
-                           check=False, timeout=timeout)
+    def run(
+        self,
+        args: list[str],
+        *,
+        cwd: Path | None = None,
+        env: dict[str, str] | None = None,
+        stdin: str | None = None,
+        check: bool = True,
+        timeout: int | None = None,
+    ) -> Result:
+        p = subprocess.run(
+            args,
+            cwd=cwd,
+            env=env,
+            text=True,
+            input=stdin,
+            capture_output=True,
+            check=False,
+            timeout=timeout,
+        )
         r = Result(p.returncode, p.stdout, p.stderr)
         if check and p.returncode:
-            raise FactoryError(f"command failed ({p.returncode}): {' '.join(args)}\nstdout:\n{p.stdout}\nstderr:\n{p.stderr}")
+            raise FactoryError(
+                f"command failed ({p.returncode}): {' '.join(args)}\n"
+                f"stdout:\n{p.stdout}\nstderr:\n{p.stderr}"
+            )
         return r
 
 
@@ -67,7 +88,9 @@ def gh_json(args: list[str], *, runner: Runner = RUNNER) -> Any:
     try:
         return json.loads(r.stdout)
     except json.JSONDecodeError as exc:
-        raise FactoryError(f"GitHub CLI returned invalid JSON for {' '.join(args)}") from exc
+        raise FactoryError(
+            f"GitHub CLI returned invalid JSON for {' '.join(args)}"
+        ) from exc
 
 
 def authenticated_login(*, runner: Runner = RUNNER) -> str:
@@ -79,12 +102,28 @@ def authenticated_login(*, runner: Runner = RUNNER) -> str:
 
 
 def repo_exists(repo: str, *, runner: Runner = RUNNER) -> bool:
-    return runner.run(["gh", "repo", "view", repo, "--json", "nameWithOwner"], check=False).returncode == 0
+    return (
+        runner.run(
+            ["gh", "repo", "view", repo, "--json", "nameWithOwner"],
+            check=False,
+        ).returncode
+        == 0
+    )
 
 
 def current_repo(*, runner: Runner = RUNNER, cwd: Path | None = None) -> str:
-    value = runner.run(["gh", "repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"],
-                       cwd=cwd or ROOT).stdout.strip()
+    value = runner.run(
+        [
+            "gh",
+            "repo",
+            "view",
+            "--json",
+            "nameWithOwner",
+            "--jq",
+            ".nameWithOwner",
+        ],
+        cwd=cwd or ROOT,
+    ).stdout.strip()
     if not value:
         raise FactoryError("could not determine current GitHub repository")
     return value
@@ -93,7 +132,9 @@ def current_repo(*, runner: Runner = RUNNER, cwd: Path | None = None) -> str:
 def source_template_repository(*, runner: Runner = RUNNER) -> str:
     p = ROOT / ".baseline/state.json"
     if p.exists():
-        value = json.loads(p.read_text(encoding="utf-8")).get("source_repository")
+        value = json.loads(p.read_text(encoding="utf-8")).get(
+            "source_repository"
+        )
         if value:
             return str(value)
     try:
@@ -130,17 +171,33 @@ def seed_from_source(source: Path, target: Path) -> None:
 
 def git_identity(owner: str, *, runner: Runner = RUNNER, cwd: Path) -> None:
     runner.run(["git", "config", "user.name", owner], cwd=cwd)
-    runner.run(["git", "config", "user.email", f"{owner}@users.noreply.github.com"], cwd=cwd)
+    runner.run(
+        ["git", "config", "user.email", f"{owner}@users.noreply.github.com"],
+        cwd=cwd,
+    )
 
 
 def default_branch(*, runner: Runner = RUNNER, cwd: Path) -> str:
-    r = runner.run(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], cwd=cwd, check=False)
+    r = runner.run(
+        ["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
+        cwd=cwd,
+        check=False,
+    )
     if r.returncode == 0 and "/" in r.stdout.strip():
         return r.stdout.strip().split("/", 1)[1]
-    return runner.run(["git", "branch", "--show-current"], cwd=cwd).stdout.strip() or "main"
+    return (
+        runner.run(["git", "branch", "--show-current"], cwd=cwd).stdout.strip()
+        or "main"
+    )
 
 
-def run_baseline(target: Path, args: list[str], *, runner: Runner = RUNNER, source_root: Path | None = None) -> Result:
+def run_baseline(
+    target: Path,
+    args: list[str],
+    *,
+    runner: Runner = RUNNER,
+    source_root: Path | None = None,
+) -> Result:
     # Always execute the target repository's installed engine. Upgrade accepts
     # an explicit --source checkout; running the source checkout's script would
     # operate on the wrong repository because baseline.py intentionally roots
@@ -148,39 +205,69 @@ def run_baseline(target: Path, args: list[str], *, runner: Runner = RUNNER, sour
     script = target / "scripts/baseline.py"
     if not script.exists():
         raise FactoryError(f"baseline script missing: {script}")
-    return runner.run([sys.executable, str(script), *args], cwd=target, env=os.environ.copy())
+    return runner.run(
+        [sys.executable, str(script), *args], cwd=target, env=os.environ.copy()
+    )
 
 
-def stage_known(target: Path, paths: list[str], *, runner: Runner = RUNNER) -> None:
+def stage_known(
+    target: Path, paths: list[str], *, runner: Runner = RUNNER
+) -> None:
     runner.run(["git", "add", "-u"], cwd=target)
     paths = sorted(set(p for p in paths if (target / p).exists()))
     for i in range(0, len(paths), 80):
-        runner.run(["git", "add", "--force", "--", *paths[i:i+80]], cwd=target)
+        runner.run(
+            ["git", "add", "--force", "--", *paths[i : i + 80]], cwd=target
+        )
 
 
-def commit_push(target: Path, message: str, *, runner: Runner = RUNNER, branch: str | None = None) -> str:
-    if not runner.run(["git", "status", "--porcelain"], cwd=target).stdout.strip():
-        return runner.run(["git", "rev-parse", "HEAD"], cwd=target).stdout.strip()
+def commit_push(
+    target: Path,
+    message: str,
+    *,
+    runner: Runner = RUNNER,
+    branch: str | None = None,
+) -> str:
+    if not runner.run(
+        ["git", "status", "--porcelain"], cwd=target
+    ).stdout.strip():
+        return runner.run(
+            ["git", "rev-parse", "HEAD"], cwd=target
+        ).stdout.strip()
     git_identity(authenticated_login(runner=runner), runner=runner, cwd=target)
     runner.run(["git", "commit", "-m", message], cwd=target)
-    runner.run(["git", "push", "-u", "origin", branch] if branch else ["git", "push", "origin", "HEAD"], cwd=target)
+    runner.run(
+        ["git", "push", "-u", "origin", branch]
+        if branch
+        else ["git", "push", "origin", "HEAD"],
+        cwd=target,
+    )
     return runner.run(["git", "rev-parse", "HEAD"], cwd=target).stdout.strip()
 
 
 class SourceCheckout:
     def __init__(self, repo: str, *, runner: Runner = RUNNER) -> None:
-        self.repo, self.runner, self.temp = repo, runner, None
+        self.repo = repo
+        self.runner = runner
+        self.temp: tempfile.TemporaryDirectory[str] | None = None
+
     def __enter__(self) -> Path:
         try:
             here = current_repo(runner=self.runner, cwd=ROOT)
         except FactoryError:
             here = ""
-        if here.casefold() == self.repo.casefold() and (ROOT / ".baseline/VERSION").exists():
+        if (
+            here.casefold() == self.repo.casefold()
+            and (ROOT / ".baseline/VERSION").exists()
+        ):
             return ROOT
-        self.temp = tempfile.TemporaryDirectory(prefix="engineering-baseline-source-")
+        self.temp = tempfile.TemporaryDirectory(
+            prefix="engineering-baseline-source-"
+        )
         target = Path(self.temp.name) / "baseline"
         clone_repo(self.repo, target, runner=self.runner)
         return target
+
     def __exit__(self, *_: object) -> None:
         if self.temp:
             self.temp.cleanup()

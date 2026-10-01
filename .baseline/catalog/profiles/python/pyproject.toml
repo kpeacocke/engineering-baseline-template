@@ -1,5 +1,5 @@
 [project]
-name = "{{PYTHON_DIST_NAME}}"
+name = "baseline-python-dist-name-placeholder"
 version = "0.1.0"
 description = "{{PROJECT_DESCRIPTION}}"
 authors = [{ name = "{{OWNER_NAME}}" }]

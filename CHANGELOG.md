@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.3.0
+## 0.5.0
 
-- Expand the common Dev Container with Python, Rust, Java, .NET, Node.js, Go, Maven, and Gradle development tooling.
+- Add OpenSSF Best Practices readiness guidance and registration workflow to generated repositories.
 
 ## 0.2.0
 

@@ -9,13 +9,13 @@ This repository is the golden GitHub + VS Code engineering baseline for `kpeacoc
 From a clone of this repository:
 
 ```powershell
-.\baseline.ps1 new my-project --profile python --private
+.\baseline.ps1 new my-project --profile python --openssf-project 12345 --private
 ```
 
 Or without the PowerShell wrapper:
 
 ```powershell
-python .\scripts\project_factory.py new my-project --profile python --private
+python .\scripts\project_factory.py new my-project --profile python --openssf-project 12345 --private
 ```
 
 Profiles: `generic`, `python`, `ansible`. Omit `--private` for a public repository. For Ansible you may additionally provide `--ansible-namespace` and `--ansible-collection`.
@@ -38,7 +38,7 @@ Success ends with `RESULT: PROJECT READY`.
 ## Adopt an existing repository
 
 ```powershell
-.\baseline.ps1 adopt kpeacocke/attest --profile python
+.\baseline.ps1 adopt kpeacocke/attest --profile python --openssf-project 12345
 ```
 
 Adoption is deliberately conservative: existing project-specific managed files are preserved and recorded in `.baseline/state.json` as `local_overrides`; extensible files retain project text and receive the baseline-managed region. The command applies GitHub settings, opens an adoption PR, and waits for its checks. It does not merge by default.
@@ -80,6 +80,10 @@ Use `baseline.py` / `github_reconcile.py` directly for troubleshooting or advanc
 ## Repository policy
 
 The personal-account default is PR-required with the `baseline` status check and resolved review conversations, but **0 mandatory human approvals** so a solo owner is not deadlocked. Merge commits and rebase merges are disabled at repository level; squash merge is the normal merge path. Actions default token permissions are read-only, Actions are SHA-pinned, Dependabot/security controls are enabled where supported, and public repositories enable private vulnerability reporting.
+
+## OpenSSF Best Practices
+
+Every generated project must provide a numeric `bestpractices.dev` project ID or canonical project URL. The factory normalizes it, persists it in `.baseline/state.json`, and renders the project link and badge in the generated README. Review [docs/openssf-best-practices.md](docs/openssf-best-practices.md) for the self-certification workflow; the factory does not claim certification automatically.
 
 ## Requirements
 
