@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "baseline_version": "0.3.0",
+  "baseline_version": "0.5.0",
   "ownership_model": {
     "managed": "central baseline owns the complete installed file",
     "extensible": "central baseline owns only the marked managed region; project text outside markers is preserved",
@@ -107,38 +107,38 @@
       "ownership": "managed"
     },
     {
-      "path": ".github/prompts/plan.prompt.md",
-      "source": ".baseline/catalog/common/.github/prompts/plan.prompt.md",
+      "path": ".github/skills/plan/SKILL.md",
+      "source": ".baseline/catalog/common/.github/skills/plan/SKILL.md",
       "ownership": "managed"
     },
     {
-      "path": ".github/prompts/implement.prompt.md",
-      "source": ".baseline/catalog/common/.github/prompts/implement.prompt.md",
+      "path": ".github/skills/implement/SKILL.md",
+      "source": ".baseline/catalog/common/.github/skills/implement/SKILL.md",
       "ownership": "managed"
     },
     {
-      "path": ".github/prompts/debug.prompt.md",
-      "source": ".baseline/catalog/common/.github/prompts/debug.prompt.md",
+      "path": ".github/skills/debug/SKILL.md",
+      "source": ".baseline/catalog/common/.github/skills/debug/SKILL.md",
       "ownership": "managed"
     },
     {
-      "path": ".github/prompts/verify.prompt.md",
-      "source": ".baseline/catalog/common/.github/prompts/verify.prompt.md",
+      "path": ".github/skills/verify/SKILL.md",
+      "source": ".baseline/catalog/common/.github/skills/verify/SKILL.md",
       "ownership": "managed"
     },
     {
-      "path": ".github/prompts/review.prompt.md",
-      "source": ".baseline/catalog/common/.github/prompts/review.prompt.md",
+      "path": ".github/skills/review/SKILL.md",
+      "source": ".baseline/catalog/common/.github/skills/review/SKILL.md",
       "ownership": "managed"
     },
     {
-      "path": ".github/prompts/preflight.prompt.md",
-      "source": ".baseline/catalog/common/.github/prompts/preflight.prompt.md",
+      "path": ".github/skills/preflight/SKILL.md",
+      "source": ".baseline/catalog/common/.github/skills/preflight/SKILL.md",
       "ownership": "managed"
     },
     {
-      "path": ".github/prompts/ship.prompt.md",
-      "source": ".baseline/catalog/common/.github/prompts/ship.prompt.md",
+      "path": ".github/skills/ship/SKILL.md",
+      "source": ".baseline/catalog/common/.github/skills/ship/SKILL.md",
       "ownership": "managed"
     },
     {
@@ -217,8 +217,18 @@
       "ownership": "seed"
     },
     {
+      "path": "docs/openssf-best-practices.md",
+      "source": ".baseline/catalog/common/docs/openssf-best-practices.md",
+      "ownership": "seed"
+    },
+    {
       "path": ".editorconfig",
       "source": ".baseline/catalog/common/.editorconfig",
+      "ownership": "managed"
+    },
+    {
+      "path": ".flake8",
+      "source": ".baseline/catalog/common/.flake8",
       "ownership": "managed"
     },
     {

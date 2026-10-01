@@ -13,32 +13,77 @@ END = "<!-- baseline:managed:end -->"
 
 
 def slug_python(name: str) -> str:
-    value = re.sub(r"[^A-Za-z0-9_]+", "_", name.replace("-", "_")).strip("_").lower() or "project"
+    value = (
+        re.sub(r"[^A-Za-z0-9_]+", "_", name.replace("-", "_"))
+        .strip("_")
+        .lower()
+        or "project"
+    )
     return "project_" + value if value[0].isdigit() else value
 
 
-def values(profile: str, owner: str, name: str, description: str, source_repository: str,
-           *, codeowner: str | None = None, ansible_namespace: str | None = None,
-           ansible_collection: str | None = None) -> dict[str, str]:
+def normalize_openssf_project(value: str) -> str:
+    value = value.strip()
+    match = re.fullmatch(
+        r"(?:https://www\.bestpractices\.dev/en/projects/)?(\d+)", value
+    )
+    if not match:
+        raise FactoryError(
+            "OpenSSF project entry must be a numeric bestpractices.dev project ID or "
+            "https://www.bestpractices.dev/en/projects/<id>"
+        )
+    return f"https://www.bestpractices.dev/en/projects/{match.group(1)}"
+
+
+def values(
+    profile: str,
+    owner: str,
+    name: str,
+    description: str,
+    source_repository: str,
+    openssf_project: str,
+    *,
+    codeowner: str | None = None,
+    ansible_namespace: str | None = None,
+    ansible_collection: str | None = None,
+) -> dict[str, str]:
     return {
-        "PROJECT_NAME": name, "PROJECT_DESCRIPTION": description, "PROFILE": profile,
-        "OWNER": owner, "OWNER_NAME": owner, "CODEOWNER": codeowner or f"@{owner}",
+        "PROJECT_NAME": name,
+        "PROJECT_DESCRIPTION": description,
+        "PROFILE": profile,
+        "OWNER": owner,
+        "OWNER_NAME": owner,
+        "CODEOWNER": codeowner or f"@{owner}",
         "PYTHON_PACKAGE": slug_python(name),
-        "PYTHON_DIST_NAME": re.sub(r"[^A-Za-z0-9]+", "-", name).strip("-").lower() or "project",
-        "ANSIBLE_NAMESPACE": ansible_namespace or re.sub(r"[^a-z0-9_]", "_", owner.lower()),
+        "PYTHON_DIST_NAME": re.sub(r"[^A-Za-z0-9]+", "-", name)
+        .strip("-")
+        .lower()
+        or "project",
+        "ANSIBLE_NAMESPACE": ansible_namespace
+        or re.sub(r"[^a-z0-9_]", "_", owner.lower()),
         "ANSIBLE_COLLECTION": ansible_collection or slug_python(name),
         "SOURCE_REPOSITORY": source_repository,
+        "OPENSSF_PROJECT": normalize_openssf_project(openssf_project),
+        "OPENSSF_PROJECT_ID": normalize_openssf_project(
+            openssf_project
+        ).rsplit("/", 1)[-1],
     }
 
 
 def render(text: str, vals: dict[str, str]) -> str:
     for k, v in vals.items():
         text = text.replace("{{" + k + "}}", v)
+    text = text.replace(
+        "baseline-python-dist-name-placeholder",
+        vals.get("PYTHON_DIST_NAME", "baseline-python-dist-name-placeholder"),
+    )
     return text
 
 
 def manifest(root: Path) -> dict[str, Any]:
-    return json.loads((root / ".baseline/manifest.json").read_text(encoding="utf-8"))
+    return json.loads(
+        (root / ".baseline/manifest.json").read_text(encoding="utf-8")
+    )
 
 
 def assets(root: Path, profile: str) -> list[dict[str, Any]]:
@@ -51,16 +96,24 @@ def assets(root: Path, profile: str) -> list[dict[str, Any]]:
 def managed_region(text: str, start: str, end: str) -> str:
     if start not in text or end not in text:
         raise FactoryError(f"managed markers missing: {start!r} / {end!r}")
-    a = text.index(start); b = text.index(end, a) + len(end)
+    a = text.index(start)
+    b = text.index(end, a) + len(end)
     return text[a:b]
 
 
-def merge_extensible(current: str, canonical: str, start: str, end: str) -> str:
+def merge_extensible(
+    current: str, canonical: str, start: str, end: str
+) -> str:
     region = managed_region(canonical, start, end)
     if start in current and end in current:
-        a = current.index(start); b = current.index(end, a) + len(end)
+        a = current.index(start)
+        b = current.index(end, a) + len(end)
         return current[:a] + region + current[b:]
-    sep = "" if not current or current.endswith("\n\n") else ("\n" if current.endswith("\n") else "\n\n")
+    sep = (
+        ""
+        if not current or current.endswith("\n\n")
+        else ("\n" if current.endswith("\n") else "\n\n")
+    )
     return current + sep + region + "\n"
 
 
@@ -68,7 +121,9 @@ def rendered_path(asset: dict[str, Any], vals: dict[str, str]) -> str:
     return render(str(asset["path"]), vals)
 
 
-def safe_repo_path(root: Path, relative: str, *, purpose: str = "baseline path") -> Path:
+def safe_repo_path(
+    root: Path, relative: str, *, purpose: str = "baseline path"
+) -> Path:
     rel = Path(relative)
     if rel.is_absolute():
         raise FactoryError(f"{purpose} must be relative: {relative!r}")
@@ -77,57 +132,109 @@ def safe_repo_path(root: Path, relative: str, *, purpose: str = "baseline path")
     try:
         candidate.relative_to(resolved_root)
     except ValueError as exc:
-        raise FactoryError(f"{purpose} escapes repository root: {relative!r}") from exc
+        raise FactoryError(
+            f"{purpose} escapes repository root: {relative!r}"
+        ) from exc
     return candidate
 
 
-def write_state(target: Path, vals: dict[str, str], version: str, profile: str, overrides: list[str]) -> None:
+def write_state(
+    target: Path,
+    vals: dict[str, str],
+    version: str,
+    profile: str,
+    overrides: list[str],
+) -> None:
     data = {
-        "schema_version": 1, "installed_version": version, "profile": profile,
-        "project_name": vals["PROJECT_NAME"], "description": vals["PROJECT_DESCRIPTION"],
-        "owner": vals["OWNER"], "owner_name": vals["OWNER_NAME"], "codeowner": vals["CODEOWNER"],
-        "ansible_namespace": vals["ANSIBLE_NAMESPACE"], "ansible_collection": vals["ANSIBLE_COLLECTION"],
-        "source_repository": vals["SOURCE_REPOSITORY"], "template_mode": False,
-        "local_overrides": sorted(set(overrides)), "last_reconciled": None,
+        "schema_version": 1,
+        "installed_version": version,
+        "profile": profile,
+        "project_name": vals["PROJECT_NAME"],
+        "description": vals["PROJECT_DESCRIPTION"],
+        "owner": vals["OWNER"],
+        "owner_name": vals["OWNER_NAME"],
+        "codeowner": vals["CODEOWNER"],
+        "ansible_namespace": vals["ANSIBLE_NAMESPACE"],
+        "ansible_collection": vals["ANSIBLE_COLLECTION"],
+        "source_repository": vals["SOURCE_REPOSITORY"],
+        "template_mode": False,
+        "openssf_project": vals["OPENSSF_PROJECT"],
+        "local_overrides": sorted(set(overrides)),
+        "last_reconciled": None,
     }
-    (target / ".baseline/state.json").write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    (target / ".baseline/state.json").write_text(
+        json.dumps(data, indent=2) + "\n", encoding="utf-8"
+    )
 
 
-def adopt(source: Path, target: Path, *, profile: str, owner: str, name: str,
-          source_repository: str, description: str = "TODO: describe this project.") -> list[str]:
+def adopt(
+    source: Path,
+    target: Path,
+    *,
+    profile: str,
+    owner: str,
+    name: str,
+    source_repository: str,
+    openssf_project: str,
+    description: str = "TODO: describe this project.",
+) -> list[str]:
     existing_state = state_values(target)
     template_seed = bool(existing_state.get("template_mode", False))
     if existing_state and not template_seed:
-        raise FactoryError("repository already has an installed baseline; use update")
+        raise FactoryError(
+            "repository already has an installed baseline; use update"
+        )
     if (target / ".baseline").exists():
         shutil.rmtree(target / ".baseline")
     shutil.copytree(source / ".baseline", target / ".baseline")
-    version = (source / ".baseline/VERSION").read_text(encoding="utf-8").strip()
-    vals = values(profile, owner, name, description, source_repository)
+    version = (
+        (source / ".baseline/VERSION").read_text(encoding="utf-8").strip()
+    )
+    vals = values(
+        profile, owner, name, description, source_repository, openssf_project
+    )
     overrides: list[str] = []
     for asset in assets(source, profile):
         rel = rendered_path(asset, vals)
-        src = safe_repo_path(source, str(asset["source"]), purpose="baseline asset source")
-        dst = safe_repo_path(target, rel, purpose="rendered baseline asset path")
+        src = safe_repo_path(
+            source, str(asset["source"]), purpose="baseline asset source"
+        )
+        dst = safe_repo_path(
+            target, rel, purpose="rendered baseline asset path"
+        )
         ownership = str(asset["ownership"])
-        canonical = render(src.read_text(encoding="utf-8"), vals if ownership == "seed" else {})
+        canonical = render(
+            src.read_text(encoding="utf-8"),
+            vals if ownership == "seed" else {},
+        )
         dst.parent.mkdir(parents=True, exist_ok=True)
         if ownership == "managed":
             if template_seed or not dst.exists():
-                if not dst.exists() or dst.read_text(encoding="utf-8") != canonical:
+                if (
+                    not dst.exists()
+                    or dst.read_text(encoding="utf-8") != canonical
+                ):
                     dst.write_text(canonical, encoding="utf-8", newline="\n")
             elif dst.read_text(encoding="utf-8") != canonical:
                 overrides.append(rel)
         elif ownership == "seed":
             if template_seed or not dst.exists():
-                if not dst.exists() or dst.read_text(encoding="utf-8") != canonical:
+                if (
+                    not dst.exists()
+                    or dst.read_text(encoding="utf-8") != canonical
+                ):
                     dst.write_text(canonical, encoding="utf-8", newline="\n")
         elif ownership == "extensible":
             if not dst.exists():
                 dst.write_text(canonical, encoding="utf-8", newline="\n")
             else:
                 current = dst.read_text(encoding="utf-8")
-                updated = merge_extensible(current, canonical, asset.get("start_marker", START), asset.get("end_marker", END))
+                updated = merge_extensible(
+                    current,
+                    canonical,
+                    asset.get("start_marker", START),
+                    asset.get("end_marker", END),
+                )
                 if updated != current:
                     dst.write_text(updated, encoding="utf-8", newline="\n")
         else:
@@ -137,24 +244,41 @@ def adopt(source: Path, target: Path, *, profile: str, owner: str, name: str,
 
 
 def snapshot_paths(target: Path) -> list[str]:
-    paths = [".baseline/VERSION", ".baseline/manifest.json", ".baseline/state.json"]
+    paths = [
+        ".baseline/VERSION",
+        ".baseline/manifest.json",
+        ".baseline/state.json",
+    ]
     catalog = target / ".baseline/catalog"
     if catalog.exists():
-        paths.extend(p.relative_to(target).as_posix() for p in catalog.rglob("*") if p.is_file())
+        paths.extend(
+            p.relative_to(target).as_posix()
+            for p in catalog.rglob("*")
+            if p.is_file()
+        )
     return sorted(set(paths))
 
 
 def applicable_paths(target: Path) -> list[str]:
-    st = state_values(target); profile = str(st.get("profile") or "generic")
-    vals = values(profile, str(st.get("owner") or "OWNER"), str(st.get("project_name") or "project"),
-                  str(st.get("description") or ""), str(st.get("source_repository") or ""),
-                  codeowner=str(st.get("codeowner") or "@OWNER"),
-                  ansible_namespace=str(st.get("ansible_namespace") or "owner"),
-                  ansible_collection=str(st.get("ansible_collection") or "project"))
+    st = state_values(target)
+    profile = str(st.get("profile") or "generic")
+    vals = values(
+        profile,
+        str(st.get("owner") or "OWNER"),
+        str(st.get("project_name") or "project"),
+        str(st.get("description") or ""),
+        str(st.get("source_repository") or ""),
+        str(st.get("openssf_project") or ""),
+        codeowner=str(st.get("codeowner") or "@OWNER"),
+        ansible_namespace=str(st.get("ansible_namespace") or "owner"),
+        ansible_collection=str(st.get("ansible_collection") or "project"),
+    )
     result: set[str] = set()
     for asset in assets(target, profile):
         rel = rendered_path(asset, vals)
-        path = safe_repo_path(target, rel, purpose="rendered baseline asset path")
+        path = safe_repo_path(
+            target, rel, purpose="rendered baseline asset path"
+        )
         if path.exists():
             result.add(rel)
     return sorted(result)
@@ -167,33 +291,57 @@ def local_doctor(target: Path, *, runner: Runner = RUNNER) -> None:
         raise FactoryError("missing .baseline/state.json")
     profile = str(st.get("profile") or "generic")
     overrides = set(st.get("local_overrides") or [])
-    vals = values(profile, str(st.get("owner") or "OWNER"), str(st.get("project_name") or "project"),
-                  str(st.get("description") or ""), str(st.get("source_repository") or ""),
-                  codeowner=str(st.get("codeowner") or "@OWNER"),
-                  ansible_namespace=str(st.get("ansible_namespace") or "owner"),
-                  ansible_collection=str(st.get("ansible_collection") or "project"))
+    vals = values(
+        profile,
+        str(st.get("owner") or "OWNER"),
+        str(st.get("project_name") or "project"),
+        str(st.get("description") or ""),
+        str(st.get("source_repository") or ""),
+        str(st.get("openssf_project") or ""),
+        codeowner=str(st.get("codeowner") or "@OWNER"),
+        ansible_namespace=str(st.get("ansible_namespace") or "owner"),
+        ansible_collection=str(st.get("ansible_collection") or "project"),
+    )
     drift: list[str] = []
     for asset in assets(target, profile):
-        rel = rendered_path(asset, vals); dst = safe_repo_path(target, rel, purpose="rendered baseline asset path"); own = str(asset["ownership"])
+        rel = rendered_path(asset, vals)
+        dst = safe_repo_path(
+            target, rel, purpose="rendered baseline asset path"
+        )
+        own = str(asset["ownership"])
         if own == "seed":
             continue
         if not dst.exists():
-            drift.append(f"missing {rel}"); continue
+            drift.append(f"missing {rel}")
+            continue
         if rel in overrides:
             continue
-        canonical = safe_repo_path(target, str(asset["source"]), purpose="baseline asset source").read_text(encoding="utf-8")
+        canonical = safe_repo_path(
+            target, str(asset["source"]), purpose="baseline asset source"
+        ).read_text(encoding="utf-8")
         current = dst.read_text(encoding="utf-8")
         if own == "managed" and current != canonical:
             drift.append(f"managed drift {rel}")
         elif own == "extensible":
             try:
-                if managed_region(current, asset.get("start_marker", START), asset.get("end_marker", END)) != managed_region(canonical, asset.get("start_marker", START), asset.get("end_marker", END)):
+                if managed_region(
+                    current,
+                    asset.get("start_marker", START),
+                    asset.get("end_marker", END),
+                ) != managed_region(
+                    canonical,
+                    asset.get("start_marker", START),
+                    asset.get("end_marker", END),
+                ):
                     drift.append(f"extensible drift {rel}")
             except FactoryError:
                 drift.append(f"managed markers missing {rel}")
     if drift:
         raise FactoryError("local baseline drift:\n  " + "\n  ".join(drift))
-    print(f"[PASS ] local baseline {st.get('installed_version')} profile={profile} overrides={len(overrides)}")
+    print(
+        f"[PASS ] local baseline {st.get('installed_version')} "
+        f"profile={profile} overrides={len(overrides)}"
+    )
 
 
 def preserve_overrides(target: Path) -> dict[str, bytes]:
@@ -205,11 +353,16 @@ def preserve_overrides(target: Path) -> dict[str, bytes]:
     return saved
 
 
-def restore_overrides(target: Path, saved: dict[str, bytes], source_repository: str) -> None:
+def restore_overrides(
+    target: Path, saved: dict[str, bytes], source_repository: str
+) -> None:
     st = state_values(target)
     for rel, data in saved.items():
         p = safe_repo_path(target, rel, purpose="local override path")
-        p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(data)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(data)
     st["local_overrides"] = sorted(saved)
     st["source_repository"] = source_repository
-    (target / ".baseline/state.json").write_text(json.dumps(st, indent=2) + "\n", encoding="utf-8")
+    (target / ".baseline/state.json").write_text(
+        json.dumps(st, indent=2) + "\n", encoding="utf-8"
+    )

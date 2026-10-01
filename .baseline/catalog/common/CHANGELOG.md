@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0
+
+- Add OpenSSF Best Practices readiness guidance and registration workflow to generated repositories.
+
 ## 0.2.0
 
 - Hardened the project factory with manifest path-boundary enforcement, consistent optional GitHub API handling, and optimisation-proof self-tests.

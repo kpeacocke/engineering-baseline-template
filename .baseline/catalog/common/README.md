@@ -4,6 +4,8 @@
 
 This repository is governed by engineering baseline **{{BASELINE_VERSION}}** using the **{{PROFILE}}** profile.
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/{{OPENSSF_PROJECT_ID}}/badge)]({{OPENSSF_PROJECT}})
+
 ## Normal workflow
 
 Verify the local baseline and GitHub settings:
@@ -27,6 +29,10 @@ python .\scripts\baseline.py doctor
 ```
 
 In VS Code, use `/plan`, `/implement`, `/debug`, `/verify`, `/review`, `/preflight`, and `/ship`. Durable methodology lives in `.github/skills/`; repository-specific guidance can extend the managed instructions without replacing it.
+
+## OpenSSF Best Practices
+
+This factory includes the documentation and controls needed to prepare a project for the [OpenSSF Best Practices Badge](https://openssf.org/projects/best-practices-badge/). Use [docs/openssf-best-practices.md](docs/openssf-best-practices.md) to review the criteria, register the project at [bestpractices.dev](https://www.bestpractices.dev/), and record the resulting badge link after the project has been assessed.
 
 ## Repository-specific documentation
 
