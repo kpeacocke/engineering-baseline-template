@@ -1,6 +1,15 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - /.baseline/catalog/common/.github/workflows
+      - /.baseline/catalog/profiles/python/.github/workflows
+      - /.baseline/catalog/profiles/ansible/.github/workflows
     schedule:
       interval: weekly
+    groups:
+      workflow-actions:
+        group-by: dependency-name
+        patterns:
+          - "*"

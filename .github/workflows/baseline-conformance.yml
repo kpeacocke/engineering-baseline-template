@@ -21,6 +21,11 @@ jobs:
         run: python scripts/project_factory.py local-doctor
       - name: Validate project factory
         run: python scripts/project_factory.py self-test
+      - name: Golden template - test catalogue regressions
+        if: github.repository == 'kpeacocke/engineering-baseline-template'
+        run: |
+          python -m pip install --disable-pip-version-check -r .baseline/tests/requirements.txt
+          python -m unittest discover -s .baseline/tests -v
       - name: Prove first bootstrap when this is still a template
         shell: bash
         run: |

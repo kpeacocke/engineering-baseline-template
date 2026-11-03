@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1
+
+- Recommend Copilot Chat instead of the deprecated separate Copilot extension in every profile.
+- Align live and catalogue workflow action pins, including setup-python v7.1.0.
+- Group Dependabot action version updates across live and catalogue workflow directories.
+- Add CI regressions for extension recommendations, profile bootstrap output, named and unnamed action steps, Dependabot configuration and release metadata.
+
 ## 0.5.0
 
 - Add OpenSSF Best Practices readiness guidance and registration workflow to generated repositories.
