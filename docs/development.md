@@ -23,7 +23,9 @@ pushing the update.
 
 The golden template also runs `python -m unittest discover -s .baseline/tests -v`. These
 regressions verify workflow consistency and current extension recommendations,
-including the output of a fresh bootstrap for every profile.
+including the output of a fresh bootstrap for every profile. Install
+`.baseline/tests/requirements.txt` before running them locally; CI installs the
+pinned YAML parser before checking all Dependabot configurations.
 
 ## Project-specific setup
 

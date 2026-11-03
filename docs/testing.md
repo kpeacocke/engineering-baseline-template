@@ -2,9 +2,10 @@
 
 ## Golden template regression tests
 
-Run the standard-library test suite without installing dependencies:
+Install the pinned YAML parser, then run the unittest suite:
 
 ```sh
+python -m pip install -r .baseline/tests/requirements.txt
 python -m unittest discover -s .baseline/tests -v
 ```
 
@@ -15,7 +16,14 @@ It checks:
 - a fresh bootstrap of every profile emits those recommendations and passes
   `local-doctor`;
 - managed live workflows match their catalogue copies;
-- action pins and release comments agree across live and catalogue workflows.
+- action pins and release comments agree across live and catalogue workflows,
+  including named steps;
+- each Dependabot configuration covers every workflow directory once, groups
+  action updates by dependency name and preserves Python dependency updates;
+- the version, manifest, installed state and changelog agree.
+
+Negative fixtures reject missing or duplicate directories, absent grouping,
+root-only configurations, malformed YAML and mismatched action pins in named steps.
 
 The golden template runs these tests in its required `baseline` CI check.
 Generated projects skip this template-only step and retain their own test suite.
