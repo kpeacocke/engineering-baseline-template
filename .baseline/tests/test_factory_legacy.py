@@ -2,6 +2,7 @@ import argparse
 import importlib.util
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -54,6 +55,83 @@ class FactoryLegacyTests(unittest.TestCase):
                 factory.local.values(
                     "generic", "owner", "project", "", "owner/template", "invalid"
                 )
+
+    def test_adopt_rejects_blank_openssf_before_target_changes(self):
+        for script_root in SCRIPT_ROOTS:
+            factory = self.factory(script_root)
+            with self.subTest(root=script_root), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                source = root / "source"
+                (source / ".baseline").mkdir(parents=True)
+                (source / ".baseline/VERSION").write_text("1.0.0\n")
+                (source / ".baseline/manifest.json").write_text(json.dumps({
+                    "common_assets": [],
+                    "profiles": {"generic": {"assets": []}},
+                }))
+                target = root / "target"
+                (target / ".baseline").mkdir(parents=True)
+                marker = target / ".baseline/marker"
+                marker.write_text("keep")
+
+                with self.assertRaisesRegex(
+                    factory.common.FactoryError, "OpenSSF project entry"
+                ):
+                    factory.local.adopt(
+                        source,
+                        target,
+                        profile="generic",
+                        owner="owner",
+                        name="project",
+                        source_repository="owner/template",
+                        openssf_project="  ",
+                    )
+
+                self.assertEqual(marker.read_text(), "keep")
+                self.assertFalse((target / ".baseline/state.json").exists())
+
+    def test_bootstrap_rejects_blank_openssf_before_applying_assets(self):
+        for script_root in SCRIPT_ROOTS:
+            with self.subTest(root=script_root), tempfile.TemporaryDirectory() as tmp:
+                target = Path(tmp)
+                shutil.copytree(ROOT / ".baseline", target / ".baseline")
+                scripts = target / "scripts"
+                scripts.mkdir()
+                shutil.copyfile(script_root / "baseline.py", scripts / "baseline.py")
+                before = {
+                    path.relative_to(target): path.read_bytes()
+                    for path in target.rglob("*")
+                    if path.is_file()
+                }
+
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        "scripts/baseline.py",
+                        "bootstrap",
+                        "--profile",
+                        "generic",
+                        "--name",
+                        "project",
+                        "--owner",
+                        "owner",
+                        "--openssf-project",
+                        "  ",
+                    ],
+                    cwd=target,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    check=False,
+                )
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("OpenSSF project entry", result.stderr)
+                after = {
+                    path.relative_to(target): path.read_bytes()
+                    for path in target.rglob("*")
+                    if path.is_file()
+                }
+                self.assertEqual(after, before)
 
     def test_seed_excludes_direct_and_nested_destinations(self):
         for script_root in SCRIPT_ROOTS:

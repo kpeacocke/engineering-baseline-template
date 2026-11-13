@@ -183,6 +183,7 @@ def adopt(
     openssf_project: str,
     description: str = "TODO: describe this project.",
 ) -> list[str]:
+    openssf_project = normalize_openssf_project(openssf_project)
     existing_state = state_values(target)
     template_seed = bool(existing_state.get("template_mode", False))
     if existing_state and not template_seed:

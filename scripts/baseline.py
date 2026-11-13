@@ -329,6 +329,7 @@ def write_state(
 
 
 def cmd_bootstrap(args: argparse.Namespace) -> int:
+    args.openssf_project = normalize_openssf_project(args.openssf_project)
     m = manifest()
     old = state()
     if (
