@@ -162,7 +162,7 @@ def seed_from_source(source: Path, target: Path) -> None:
 
     def ignored(directory: str, names: list[str]) -> set[str]:
         ignored_names = {".git"}
-        if Path(directory).resolve() == source and target.parent == source:
+        if Path(directory).resolve() == target.parent:
             ignored_names.add(target.name)
         return ignored_names.intersection(names)
 
