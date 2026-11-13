@@ -47,6 +47,11 @@ def values(
     ansible_namespace: str | None = None,
     ansible_collection: str | None = None,
 ) -> dict[str, str]:
+    openssf_project_url = (
+        normalize_openssf_project(openssf_project)
+        if openssf_project.strip()
+        else ""
+    )
     return {
         "PROJECT_NAME": name,
         "PROJECT_DESCRIPTION": description,
@@ -63,10 +68,10 @@ def values(
         or re.sub(r"[^a-z0-9_]", "_", owner.lower()),
         "ANSIBLE_COLLECTION": ansible_collection or slug_python(name),
         "SOURCE_REPOSITORY": source_repository,
-        "OPENSSF_PROJECT": normalize_openssf_project(openssf_project),
-        "OPENSSF_PROJECT_ID": normalize_openssf_project(
-            openssf_project
-        ).rsplit("/", 1)[-1],
+        "OPENSSF_PROJECT": openssf_project_url,
+        "OPENSSF_PROJECT_ID": openssf_project_url.rsplit("/", 1)[-1]
+        if openssf_project_url
+        else "",
     }
 
 
@@ -178,6 +183,7 @@ def adopt(
     openssf_project: str,
     description: str = "TODO: describe this project.",
 ) -> list[str]:
+    openssf_project = normalize_openssf_project(openssf_project)
     existing_state = state_values(target)
     template_seed = bool(existing_state.get("template_mode", False))
     if existing_state and not template_seed:
