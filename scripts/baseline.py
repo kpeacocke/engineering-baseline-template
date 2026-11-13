@@ -722,7 +722,11 @@ def copy_baseline_snapshot(source: Path) -> dict[str, Any]:
     if tmp.exists():
         shutil.rmtree(tmp)
     tmp.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(source / ".baseline" / "catalog", tmp / "catalog")
+    shutil.copytree(
+        source / ".baseline" / "catalog",
+        tmp / "catalog",
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
     shutil.copy2(source / ".baseline" / "manifest.json", tmp / "manifest.json")
     shutil.copy2(source / ".baseline" / "VERSION", tmp / "VERSION")
     if (BASELINE / "catalog").exists():
