@@ -360,6 +360,8 @@ def apply_update_local(
     st = state_values(target)
     if not st:
         raise FactoryError("current repository has no installed baseline")
+    state_path = target / ".baseline/state.json"
+    original_state = state_path.read_bytes()
     saved = preserve_overrides(target)
     source_repo = str(st.get("source_repository") or "")
     run_baseline(
@@ -372,6 +374,20 @@ def apply_update_local(
         applicable_paths(target) + snapshot_paths(target),
         runner=runner,
     )
+    updated = state_values(target)
+    if {k: v for k, v in st.items() if k != "last_reconciled"} == {
+        k: v for k, v in updated.items() if k != "last_reconciled"
+    }:
+        diff = runner.run(
+            ["git", "diff", "--cached", "--quiet", "--", ".", ":(exclude).baseline/state.json"],
+            cwd=target,
+            check=False,
+        )
+        if diff.returncode not in (0, 1):
+            raise FactoryError(f"could not inspect staged baseline changes: {diff.stderr}")
+        if diff.returncode == 0:
+            state_path.write_bytes(original_state)
+            runner.run(["git", "add", "--", ".baseline/state.json"], cwd=target)
     print(
         f"RESULT: LOCAL UPDATE APPLIED — {(target / '.baseline/VERSION').read_text().strip()}"
     )
